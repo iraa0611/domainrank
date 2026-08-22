@@ -1,1 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>DomainRank — The Domain Leaderboard</title>
+
+  <meta
+    name="description"
+    content="Discover the internet's most wanted domains and compete for the top spot."
+  >
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      background: #08090d;
+      color: #f5f5f7;
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .container {
+      width: min(1100px, 92%);
+      margin: auto;
+    }
+
+    /* NAV */
+
+    nav {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #20222b;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.7px;
+    }
+
+    .logo span {
+      color: #7c5cff;
+    }
+
+    .nav-button {
+      background: #fff;
+      color: #08090d;
+      padding: 10px 17px;
+      border-radius: 9px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* HERO */
+
+    .hero {
+      text-align: center;
+      padding: 75px 0 45px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #17151f;
+      border: 1px solid #302a4b;
+      color: #a996ff;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(42px, 8vw, 78px);
+      line-height: .95;
+      letter-spacing: -4px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .gradient {
+      background: linear-gradient(90deg, #fff, #9d88ff);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      color: #92949f;
+      max-width: 580px;
+      margin: 25px auto 30px;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .primary {
+      background: #7c5cff;
+      color: white;
+      border: none;
+      padding: 13px 21px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .secondary {
+      background: #15161c;
+      color: white;
+      border: 1px solid #292b34;
+      padding: 13px 21px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* STATS */
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0 55px;
+    }
+
+    .stat {
+      background: #111218;
+      border: 1px solid #20222b;
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 25px;
+      margin-bottom: 5px;
+    }
+
+    .stat span {
+      color: #7e808a;
+      font-size: 13px;
+    }
+
+    /* LEADERBOARD */
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      margin-bottom: 18px;
+      gap: 15px;
+    }
+
+    .section-header h2 {
+      font-size: 27px;
+      letter-spacing: -1px;
+    }
+
+    .section-header p {
+      color: #777983;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .search {
+      background: #111218;
+      border: 1px solid #272934;
+      color: white;
+      border-radius: 9px;
+      padding: 10px 13px;
+      width: 220px;
+      outline: none;
+    }
+
+    .leaderboard {
+      border: 1px solid #20222b;
+      background: #101116;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    .domain-row {
+      display: grid;
+      grid-template-columns: 55px 1fr 120px 100px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid #20222b;
+      gap: 10px;
+    }
+
+    .domain-row:last-child {
+      border-bottom: none;
+    }
+
+    .rank {
+      font-size: 19px;
+      font-weight: 800;
+      color: #777983;
+    }
+
+    .rank.first {
+      color: #ffd76a;
+    }
+
+    .domain-name {
+      font-size: 17px;
+      font-weight: 750;
+    }
+
+    .domain-meta {
+      color: #737580;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .bid {
+      text-align: right;
+      font-weight: 800;
+    }
+
+    .bid small {
+      display: block;
+      color: #686b76;
+      font-weight: 400;
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+
+    .bid-button {
+      justify-self: end;
+      background: #191a22;
+      border: 1px solid #30323d;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .bid-button:hover {
+      background: #7c5cff;
+      border-color: #7c5cff;
+    }
+
+    /* MODAL */
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 10;
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      width: min(450px, 100%);
+      background: #111218;
+      border: 1px solid #2a2c36;
+      border-radius: 16px;
+      padding: 25px;
+      position: relative;
+    }
+
+    .modal h2 {
+      margin-bottom: 7px;
+    }
+
+    .modal p {
+      color: #858792;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .close {
+      position: absolute;
+      right: 18px;
+      top: 15px;
+      border: none;
+      background: none;
+      color: #777;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #858792;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      background: #08090d;
+      border: 1px solid #2b2d37;
+      color: white;
+      border-radius: 9px;
+      padding: 12px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: #7c5cff;
+    }
+
+    .full {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    /* FOOTER */
+
+    footer {
+      text-align: center;
+      color: #555862;
+      font-size: 12px;
+      padding: 70px 0 30px;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 650px) {
+
+      nav {
+        height: 62px;
+      }
+
+      .nav-button {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+
+      .hero {
+        padding: 55px 0 35px;
+      }
+
+      h1 {
+        letter-spacing: -2px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .stat {
+        padding: 15px;
+      }
+
+      .section-header {
+        display: block;
+      }
+
+      .search {
+        width: 100%;
+        margin-top: 15px;
+      }
+
+      .domain-row {
+        grid-template-columns: 35px 1fr;
+        padding: 16px;
+      }
+
+      .bid {
+        text-align: left;
+        grid-column: 2;
+      }
+
+      .bid-button {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <nav>
+      <div class="logo">Domain<span>Rank</span></div>
+
+      <button class="nav-button" onclick="openSubmit()">
+        Submit Domain
+      </button>
+    </nav>
+
+    <section class="hero">
+
+      <div class="badge">
+        🔥 The domain leaderboard
+      </div>
+
+      <h1>
+        Which domain deserves
+        <span class="gradient">#1?</span>
+      </h1>
+
+      <p>
+        Discover interesting domains, compete for the top spot,
+        and get your domain in front of potential buyers.
+      </p>
+
+      <div class="hero-buttons">
+
+        <button class="primary" onclick="scrollToLeaderboard()">
+          Explore Domains
+        </button>
+
+        <button class="secondary" onclick="openSubmit()">
+          Submit Your Domain
+        </button>
+
+      </div>
+
+    </section>
+
+    <section class="stats">
+
+      <div class="stat">
+        <strong id="domainCount">5</strong>
+        <span>Domains</span>
+      </div>
+
+      <div class="stat">
+        <strong id="totalBids">$0</strong>
+        <span>Total Bid Value</span>
+      </div>
+
+      <div class="stat">
+        <strong id="highestBid">$0</strong>
+        <span>Highest Bid</span>
+      </div>
+
+    </section>
+
+    <section id="leaderboardSection">
+
+      <div class="section-header">
+
+        <div>
+          <h2>🔥 Live Leaderboard</h2>
+          <p>Highest bids appear first.</p>
+        </div>
+
+        <input
+          class="search"
+          id="search"
+          placeholder="Search domains..."
+          oninput="renderLeaderboard()"
+        >
+
+      </div>
+
+      <div class="leaderboard" id="leaderboard"></div>
+
+    </section>
+
+    <footer>
+      DomainRank © 2026 · Rankings are based on bids and are not objective domain valuations.
+    </footer>
+
+  </div>
+
+
+  <!-- SUBMIT MODAL -->
+
+  <div class="overlay" id="submitOverlay">
+
+    <div class="modal">
+
+      <button class="close" onclick="closeSubmit()">×</button>
+
+      <h2>Submit your domain</h2>
+
+      <p>
+        Add your domain to the leaderboard.
+        This prototype does not process real payments yet.
+      </p>
+
+      <div class="field">
+        <label>DOMAIN</label>
+        <input id="newDomain" placeholder="example.com">
+      </div>
+
+      <div class="field">
+        <label>YOUR NAME</label>
+        <input id="newOwner" placeholder="Your name">
+      </div>
+
+      <div class="field">
+        <label>STARTING BID ($)</label>
+        <input id="newBid" type="number" min="1" value="5">
+      </div>
+
+      <button class="primary full" onclick="submitDomain()">
+        Add Domain
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- BID MODAL -->
+
+  <div class="overlay" id="bidOverlay">
+
+    <div class="modal">
+
+      <button class="close" onclick="closeBid()">×</button>
+
+      <h2>Outbid this domain</h2>
+
+      <p id="bidDescription"></p>
+
+      <div class="field">
+        <label>YOUR NAME</label>
+        <input id="bidderName" placeholder="Your name">
+      </div>
+
+      <div class="field">
+        <label>YOUR BID ($)</label>
+        <input id="bidAmount" type="number" min="1">
+      </div>
+
+      <button class="primary full" onclick="placeBid()">
+        Place Bid
+      </button>
+
+    </div>
+
+  </div>
+
+
+<script>
+
+  const defaultDomains = [
+    {
+      domain: "TechFeed.ai",
+      owner: "Featured",
+      bid: 25
+    },
+    {
+      domain: "SalesInbox.ai",
+      owner: "Featured",
+      bid: 18
+    },
+    {
+      domain: "BestOrca.com",
+      owner: "Featured",
+      bid: 12
+    },
+    {
+      domain: "DualCars.com",
+      owner: "Featured",
+      bid: 9
+    },
+    {
+      domain: "NomChops.com",
+      owner: "Featured",
+      bid: 6
+    }
+  ];
+
+
+  let domains =
+    JSON.parse(localStorage.getItem("domainrank_domains"))
+    || defaultDomains;
+
+
+  let selectedDomain = null;
+
+
+  function save() {
+
+    localStorage.setItem(
+      "domainrank_domains",
+      JSON.stringify(domains)
+    );
+
+  }
+
+
+  function renderLeaderboard() {
+
+    const leaderboard =
+      document.getElementById("leaderboard");
+
+    const search =
+      document.getElementById("search")
+      .value
+      .toLowerCase();
+
+
+    let filtered = domains.filter(item =>
+      item.domain.toLowerCase().includes(search)
+    );
+
+
+    filtered.sort((a, b) => b.bid - a.bid);
+
+
+    if (filtered.length === 0) {
+
+      leaderboard.innerHTML =
+        `<div style="padding:30px;text-align:center;color:#777">
+          No domains found.
+        </div>`;
+
+      return;
+
+    }
+
+
+    leaderboard.innerHTML = filtered.map((item, index) => {
+
+      const rank = index + 1;
+
+      let emoji = rank === 1
+        ? "🥇"
+        : rank === 2
+        ? "🥈"
+        : rank === 3
+        ? "🥉"
+        : rank;
+
+
+      return `
+
+        <div class="domain-row">
+
+          <div class="rank ${rank === 1 ? "first" : ""}">
+            ${emoji}
+          </div>
+
+          <div>
+
+            <div class="domain-name">
+              ${escapeHTML(item.domain)}
+            </div>
+
+            <div class="domain-meta">
+              Submitted by ${escapeHTML(item.owner)}
+            </div>
+
+          </div>
+
+          <div class="bid">
+            <small>CURRENT BID</small>
+            $${Number(item.bid).toLocaleString()}
+          </div>
+
+          <button
+            class="bid-button"
+            onclick="openBid('${encodeURIComponent(item.domain)}')"
+          >
+            OUTBID
+          </button>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+
+    updateStats();
+
+  }
+
+
+  function updateStats() {
+
+    document.getElementById("domainCount").textContent =
+      domains.length;
+
+
+    const total =
+      domains.reduce(
+        (sum, item) => sum + Number(item.bid),
+        0
+      );
+
+
+    const highest =
+      domains.length
+      ? Math.max(...domains.map(item => Number(item.bid)))
+      : 0;
+
+
+    document.getElementById("totalBids").textContent =
+      "$" + total.toLocaleString();
+
+
+    document.getElementById("highestBid").textContent =
+      "$" + highest.toLocaleString();
+
+  }
+
+
+  function openSubmit() {
+
+    document.getElementById("submitOverlay").style.display =
+      "flex";
+
+  }
+
+
+  function closeSubmit() {
+
+    document.getElementById("submitOverlay").style.display =
+      "none";
+
+  }
+
+
+  function submitDomain() {
+
+    const domain =
+      document.getElementById("newDomain").value.trim();
+
+    const owner =
+      document.getElementById("newOwner").value.trim();
+
+    const bid =
+      Number(document.getElementById("newBid").value);
+
+
+    if (!domain || !owner || !bid || bid < 1) {
+
+      alert("Please fill in all fields.");
+
+      return;
+
+    }
+
+
+    const exists =
+      domains.some(
+        item =>
+          item.domain.toLowerCase() === domain.toLowerCase()
+      );
+
+
+    if (exists) {
+
+      alert("That domain is already listed.");
+
+      return;
+
+    }
+
+
+    domains.push({
+      domain,
+      owner,
+      bid
+    });
+
+
+    save();
+
+    renderLeaderboard();
+
+    closeSubmit();
+
+
+    document.getElementById("newDomain").value = "";
+    document.getElementById("newOwner").value = "";
+    document.getElementById("newBid").value = 5;
+
+
+    alert(
+      "Domain added! Remember: this prototype does not process real payments yet."
+    );
+
+  }
+
+
+  function openBid(encodedDomain) {
+
+    const domain =
+      decodeURIComponent(encodedDomain);
+
+
+    selectedDomain =
+      domains.find(item => item.domain === domain);
+
+
+    if (!selectedDomain) return;
+
+
+    document.getElementById("bidDescription").textContent =
+      `${selectedDomain.domain} currently has a $${selectedDomain.bid} bid. Your bid must be higher.`;
+
+
+    document.getElementById("bidAmount").value =
+      Number(selectedDomain.bid) + 1;
+
+
+    document.getElementById("bidOverlay").style.display =
+      "flex";
+
+  }
+
+
+  function closeBid() {
+
+    document.getElementById("bidOverlay").style.display =
+      "none";
+
+  }
+
+
+  function placeBid() {
+
+    if (!selectedDomain) return;
+
+
+    const bidder =
+      document.getElementById("bidderName").value.trim();
+
+
+    const amount =
+      Number(document.getElementById("bidAmount").value);
+
+
+    if (!bidder || !amount) {
+
+      alert("Please enter your name and bid.");
+
+      return;
+
+    }
+
+
+    if (amount <= Number(selectedDomain.bid)) {
+
+      alert(
+        `Your bid must be higher than $${selectedDomain.bid}.`
+      );
+
+      return;
+
+    }
+
+
+    selectedDomain.bid = amount;
+
+    selectedDomain.owner = bidder;
+
+
+    save();
+
+    renderLeaderboard();
+
+    closeBid();
+
+
+    document.getElementById("bidderName").value = "";
+
+
+    alert(
+      `You're now #1 for ${selectedDomain.domain} at $${amount}!`
+    );
+
+  }
+
+
+  function scrollToLeaderboard() {
+
+    document
+      .getElementById("leaderboardSection")
+      .scrollIntoView({
+        behavior: "smooth"
+      });
+
+  }
+
+
+  function escapeHTML(text) {
+
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+
+  }
+
+
+  renderLeaderboard();
+
+</script>
+
+</body>
+</html>
