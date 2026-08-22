@@ -843,88 +843,68 @@ function closeBid() {
 
 }
 
-
 async function placeBid() {
-
-  if (!selectedDomain) return;
-
-
-  const bidder =
-    document.getElementById("bidderName")
-      .value
-      .trim();
-
-
-  const amount =
-    Number(
-      document.getElementById("bidAmount")
-        .value
-    );
-
-
-  if (!bidder || !amount) {
-
-    alert(
-      "Please enter your name and bid."
-    );
-
-    return;
-
-  }
-
-
-  if (
-    amount <=
-    Number(selectedDomain.current_bid)
-  ) {
-
-    alert(
-      `Your bid must be higher than $${selectedDomain.current_bid}.`
-    );
-
-    return;
-
-  }
-
-
-  const { error } =
-    await supabaseClient
-      .from("domains")
-      .update({
-        current_bid: amount,
-        owner_name: bidder
-      })
-      .eq("id", selectedDomain.id);
-
-
-  if (error) {
-
-    alert(
-      "Could not place bid: " +
-      error.message
-    );
-
-    console.error(error);
-
-    return;
-
-  }
-
-
-  closeBid();
-
-  document.getElementById("bidderName").value = "";
-
-
-  await loadDomains();
-
-
-  alert(
-    `Bid updated! ${selectedDomain.domain} is now at $${amount}.`
-  );
-
+ if (!selectedDomain) return;
+ const bidder = document
+   .getElementById("bidderName")
+   .value
+   .trim();
+ const amount = Number(
+   document.getElementById("bidAmount").value
+ );
+ if (!bidder || !amount || amount <= 0) {
+   alert("Please enter your name and a valid bid amount.");
+   return;
+ }
+ if (amount <= Number(selectedDomain.current_bid)) {
+   alert(
+     "Your bid must be higher than the current bid of $" +
+     Number(selectedDomain.current_bid).toLocaleString()
+   );
+   return;
+ }
+ try {
+   const response = await fetch(
+     "https://vfkelakubxkcdzunembk.supabase.co/functions/v1/clever-responder",
+     {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json"
+       },
+       body: JSON.stringify({
+         domain_id: Number(selectedDomain.id),
+         bidder_name: bidder,
+         bid_amount: amount
+       })
+     }
+   );
+   const result = await response.json();
+   if (!response.ok) {
+     alert(
+       "Could not place bid: " +
+       (result.error || "Unknown error")
+     );
+     console.error(result);
+     return;
+   }
+   closeBid();
+   document.getElementById("bidderName").value = "";
+   document.getElementById("bidAmount").value = "";
+   await loadDomains();
+   alert(
+     "Bid created successfully!\n\n" +
+     "Your bid of $" +
+     Number(amount).toLocaleString() +
+     " is pending."
+   );
+ } catch (error) {
+   console.error(error);
+   alert(
+     "Could not place bid: " +
+     error.message
+   );
+ }
 }
-
 
 function scrollToLeaderboard() {
 
