@@ -666,12 +666,18 @@ function renderLeaderboard() {
             $${Number(item.current_bid).toLocaleString()}
 
           </div>
-
+          <div class="auction-end">
+          <small>AUCTION ENDS</small>
+          <div class="auction-countdown" data-end="${item.auction_end}">
+   Loading...
+</div>
+</div>
           <button
             class="bid-button"
             onclick="openBid(${item.id})"
           >
             OUTBID
+
           </button>
 
         </div>
@@ -685,6 +691,52 @@ function renderLeaderboard() {
 
 }
 
+function updateAuctionCountdowns() {
+
+  document.querySelectorAll(".auction-countdown").forEach(el => {
+
+    const end = new Date(el.dataset.end).getTime();
+
+    if (!Number.isFinite(end)) {
+
+      el.textContent = "Not set";
+
+      return;
+
+    }
+
+    const remaining = end - Date.now();
+
+    if (remaining <= 0) {
+
+      el.textContent = "Auction ended";
+
+      return;
+
+    }
+
+    const totalSeconds = Math.floor(remaining / 1000);
+
+    const days = Math.floor(totalSeconds / 86400);
+
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    const seconds = totalSeconds % 60;
+
+    el.textContent =
+
+      `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+  });
+
+}
+
+setInterval(updateAuctionCountdowns, 1000);
+
+updateAuctionCountdowns();
+ 
 
 function updateStats() {
 
