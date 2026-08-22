@@ -816,14 +816,12 @@ function updateStats() {
   document.getElementById("domainCount").textContent =
     domains.length;
 
-
   const total =
     domains.reduce(
       (sum, item) =>
         sum + Number(item.current_bid),
       0
     );
-
 
   const highest =
     domains.length
@@ -834,16 +832,13 @@ function updateStats() {
         )
       : 0;
 
-
   document.getElementById("totalBids").textContent =
     "$" + total.toLocaleString();
-
 
   document.getElementById("highestBid").textContent =
     "$" + highest.toLocaleString();
 
 }
-
 
 function openSubmit() {
 
@@ -852,14 +847,12 @@ function openSubmit() {
 
 }
 
-
 function closeSubmit() {
 
   document.getElementById("submitOverlay").style.display =
     "none";
 
 }
-
 
 async function submitDomain() {
 
@@ -890,7 +883,6 @@ async function submitDomain() {
 
   }
 
-
   const { error } =
     await supabaseClient
       .from("domains")
@@ -899,7 +891,6 @@ async function submitDomain() {
         owner_name: owner,
         current_bid: bid
       });
-
 
   if (error) {
 
