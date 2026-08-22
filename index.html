@@ -669,6 +669,13 @@ function renderLeaderboard() {
 <div class="winner">
   <small>WINNER</small>
   <strong>${item.winner_name}</strong>
+  <button
+  type="button"
+  class="pay-button"
+  onclick="openPayment(${item.id})"
+>
+  PAY FOR DOMAIN
+</button>
 </div>
 ` : ""}
           <div class="auction-end">
