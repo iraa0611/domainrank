@@ -8,8 +8,10 @@
 
   <meta
     name="description"
-    content="Discover the internet's most wanted domains and compete for the top spot."
+    content="Discover interesting domains and compete for the top spot."
   >
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     * {
@@ -25,13 +27,7 @@
       min-height: 100vh;
     }
 
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    button,
-    input {
+    button, input {
       font: inherit;
     }
 
@@ -39,8 +35,6 @@
       width: min(1100px, 92%);
       margin: auto;
     }
-
-    /* NAV */
 
     nav {
       height: 72px;
@@ -53,7 +47,6 @@
     .logo {
       font-size: 22px;
       font-weight: 800;
-      letter-spacing: -0.7px;
     }
 
     .logo span {
@@ -61,7 +54,7 @@
     }
 
     .nav-button {
-      background: #fff;
+      background: white;
       color: #08090d;
       padding: 10px 17px;
       border-radius: 9px;
@@ -69,8 +62,6 @@
       cursor: pointer;
       font-weight: 700;
     }
-
-    /* HERO */
 
     .hero {
       text-align: center;
@@ -137,8 +128,6 @@
       cursor: pointer;
     }
 
-    /* STATS */
-
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -165,8 +154,6 @@
       font-size: 13px;
     }
 
-    /* LEADERBOARD */
-
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -177,7 +164,6 @@
 
     .section-header h2 {
       font-size: 27px;
-      letter-spacing: -1px;
     }
 
     .section-header p {
@@ -222,7 +208,7 @@
       color: #777983;
     }
 
-    .rank.first {
+    .first {
       color: #ffd76a;
     }
 
@@ -264,10 +250,7 @@
 
     .bid-button:hover {
       background: #7c5cff;
-      border-color: #7c5cff;
     }
-
-    /* MODAL */
 
     .overlay {
       display: none;
@@ -332,16 +315,10 @@
       outline: none;
     }
 
-    .field input:focus {
-      border-color: #7c5cff;
-    }
-
     .full {
       width: 100%;
       margin-top: 5px;
     }
-
-    /* FOOTER */
 
     footer {
       text-align: center;
@@ -350,17 +327,10 @@
       padding: 70px 0 30px;
     }
 
-    /* MOBILE */
-
     @media (max-width: 650px) {
 
       nav {
         height: 62px;
-      }
-
-      .nav-button {
-        padding: 8px 12px;
-        font-size: 12px;
       }
 
       .hero {
@@ -409,255 +379,264 @@
 
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <nav>
-      <div class="logo">Domain<span>Rank</span></div>
+  <nav>
+    <div class="logo">Domain<span>Rank</span></div>
 
-      <button class="nav-button" onclick="openSubmit()">
-        Submit Domain
+    <button class="nav-button" onclick="openSubmit()">
+      Submit Domain
+    </button>
+  </nav>
+
+  <section class="hero">
+
+    <div class="badge">
+      🔥 The domain leaderboard
+    </div>
+
+    <h1>
+      Which domain deserves
+      <span class="gradient">#1?</span>
+    </h1>
+
+    <p>
+      Discover interesting domains, compete for the top spot,
+      and get your domain in front of potential buyers.
+    </p>
+
+    <div class="hero-buttons">
+
+      <button class="primary" onclick="scrollToLeaderboard()">
+        Explore Domains
       </button>
-    </nav>
 
-    <section class="hero">
-
-      <div class="badge">
-        🔥 The domain leaderboard
-      </div>
-
-      <h1>
-        Which domain deserves
-        <span class="gradient">#1?</span>
-      </h1>
-
-      <p>
-        Discover interesting domains, compete for the top spot,
-        and get your domain in front of potential buyers.
-      </p>
-
-      <div class="hero-buttons">
-
-        <button class="primary" onclick="scrollToLeaderboard()">
-          Explore Domains
-        </button>
-
-        <button class="secondary" onclick="openSubmit()">
-          Submit Your Domain
-        </button>
-
-      </div>
-
-    </section>
-
-    <section class="stats">
-
-      <div class="stat">
-        <strong id="domainCount">5</strong>
-        <span>Domains</span>
-      </div>
-
-      <div class="stat">
-        <strong id="totalBids">$0</strong>
-        <span>Total Bid Value</span>
-      </div>
-
-      <div class="stat">
-        <strong id="highestBid">$0</strong>
-        <span>Highest Bid</span>
-      </div>
-
-    </section>
-
-    <section id="leaderboardSection">
-
-      <div class="section-header">
-
-        <div>
-          <h2>🔥 Live Leaderboard</h2>
-          <p>Highest bids appear first.</p>
-        </div>
-
-        <input
-          class="search"
-          id="search"
-          placeholder="Search domains..."
-          oninput="renderLeaderboard()"
-        >
-
-      </div>
-
-      <div class="leaderboard" id="leaderboard"></div>
-
-    </section>
-
-    <footer>
-      DomainRank © 2026 · Rankings are based on bids and are not objective domain valuations.
-    </footer>
-
-  </div>
-
-
-  <!-- SUBMIT MODAL -->
-
-  <div class="overlay" id="submitOverlay">
-
-    <div class="modal">
-
-      <button class="close" onclick="closeSubmit()">×</button>
-
-      <h2>Submit your domain</h2>
-
-      <p>
-        Add your domain to the leaderboard.
-        This prototype does not process real payments yet.
-      </p>
-
-      <div class="field">
-        <label>DOMAIN</label>
-        <input id="newDomain" placeholder="example.com">
-      </div>
-
-      <div class="field">
-        <label>YOUR NAME</label>
-        <input id="newOwner" placeholder="Your name">
-      </div>
-
-      <div class="field">
-        <label>STARTING BID ($)</label>
-        <input id="newBid" type="number" min="1" value="5">
-      </div>
-
-      <button class="primary full" onclick="submitDomain()">
-        Add Domain
+      <button class="secondary" onclick="openSubmit()">
+        Submit Your Domain
       </button>
 
     </div>
 
-  </div>
+  </section>
 
+  <section class="stats">
 
-  <!-- BID MODAL -->
+    <div class="stat">
+      <strong id="domainCount">0</strong>
+      <span>Domains</span>
+    </div>
 
-  <div class="overlay" id="bidOverlay">
+    <div class="stat">
+      <strong id="totalBids">$0</strong>
+      <span>Total Bid Value</span>
+    </div>
 
-    <div class="modal">
+    <div class="stat">
+      <strong id="highestBid">$0</strong>
+      <span>Highest Bid</span>
+    </div>
 
-      <button class="close" onclick="closeBid()">×</button>
+  </section>
 
-      <h2>Outbid this domain</h2>
+  <section id="leaderboardSection">
 
-      <p id="bidDescription"></p>
+    <div class="section-header">
 
-      <div class="field">
-        <label>YOUR NAME</label>
-        <input id="bidderName" placeholder="Your name">
+      <div>
+        <h2>🔥 Live Leaderboard</h2>
+        <p>Highest bids appear first.</p>
       </div>
 
-      <div class="field">
-        <label>YOUR BID ($)</label>
-        <input id="bidAmount" type="number" min="1">
-      </div>
-
-      <button class="primary full" onclick="placeBid()">
-        Place Bid
-      </button>
+      <input
+        class="search"
+        id="search"
+        placeholder="Search domains..."
+        oninput="renderLeaderboard()"
+      >
 
     </div>
 
+    <div class="leaderboard" id="leaderboard">
+      <div style="padding:30px;text-align:center;color:#777">
+        Loading domains...
+      </div>
+    </div>
+
+  </section>
+
+  <footer>
+    DomainRank © 2026 · Rankings are based on bids and are not objective domain valuations.
+  </footer>
+
+</div>
+
+
+<!-- SUBMIT MODAL -->
+
+<div class="overlay" id="submitOverlay">
+
+  <div class="modal">
+
+    <button class="close" onclick="closeSubmit()">×</button>
+
+    <h2>Submit your domain</h2>
+
+    <p>
+      Add your domain to the leaderboard.
+    </p>
+
+    <div class="field">
+      <label>DOMAIN</label>
+      <input id="newDomain" placeholder="example.com">
+    </div>
+
+    <div class="field">
+      <label>YOUR NAME</label>
+      <input id="newOwner" placeholder="Your name">
+    </div>
+
+    <div class="field">
+      <label>STARTING BID ($)</label>
+      <input id="newBid" type="number" min="5" value="5">
+    </div>
+
+    <button class="primary full" onclick="submitDomain()">
+      Submit Domain
+    </button>
+
   </div>
+
+</div>
+
+
+<!-- BID MODAL -->
+
+<div class="overlay" id="bidOverlay">
+
+  <div class="modal">
+
+    <button class="close" onclick="closeBid()">×</button>
+
+    <h2>Outbid this domain</h2>
+
+    <p id="bidDescription"></p>
+
+    <div class="field">
+      <label>YOUR NAME</label>
+      <input id="bidderName" placeholder="Your name">
+    </div>
+
+    <div class="field">
+      <label>YOUR BID ($)</label>
+      <input id="bidAmount" type="number" min="1">
+    </div>
+
+    <button class="primary full" onclick="placeBid()">
+      Place Bid
+    </button>
+
+  </div>
+
+</div>
 
 
 <script>
 
-  const defaultDomains = [
-    {
-      domain: "TechFeed.ai",
-      owner: "Featured",
-      bid: 25
-    },
-    {
-      domain: "SalesInbox.ai",
-      owner: "Featured",
-      bid: 18
-    },
-    {
-      domain: "BestOrca.com",
-      owner: "Featured",
-      bid: 12
-    },
-    {
-      domain: "DualCars.com",
-      owner: "Featured",
-      bid: 9
-    },
-    {
-      domain: "NomChops.com",
-      owner: "Featured",
-      bid: 6
-    }
-  ];
+const SUPABASE_URL =
+  "https://vfkelakubxkcdzunembk.supabase.co";
+
+const SUPABASE_KEY =
+  sb_publishable_qkLoyTMGCN1pBfZ_j1ZCBQ_nN3zdY1P
 
 
-  let domains =
-    JSON.parse(localStorage.getItem("domainrank_domains"))
-    || defaultDomains;
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 
-  let selectedDomain = null;
+let domains = [];
+
+let selectedDomain = null;
 
 
-  function save() {
+async function loadDomains() {
 
-    localStorage.setItem(
-      "domainrank_domains",
-      JSON.stringify(domains)
-    );
+  const { data, error } =
+    await supabaseClient
+      .from("domains")
+      .select("*")
+      .order("current_bid", { ascending: false });
 
+
+  if (error) {
+
+    console.error(error);
+
+    document.getElementById("leaderboard").innerHTML =
+      `<div style="padding:30px;text-align:center;color:#ff7777">
+        Unable to load domains. Check your Supabase settings.
+      </div>`;
+
+    return;
   }
 
 
-  function renderLeaderboard() {
+  domains = data || [];
 
-    const leaderboard =
-      document.getElementById("leaderboard");
+  renderLeaderboard();
 
-    const search =
-      document.getElementById("search")
+}
+
+
+function renderLeaderboard() {
+
+  const leaderboard =
+    document.getElementById("leaderboard");
+
+  const search =
+    document.getElementById("search")
       .value
       .toLowerCase();
 
 
-    let filtered = domains.filter(item =>
-      item.domain.toLowerCase().includes(search)
-    );
+  const filtered =
+    domains
+      .filter(item =>
+        item.domain.toLowerCase().includes(search)
+      )
+      .sort(
+        (a, b) =>
+          Number(b.current_bid) -
+          Number(a.current_bid)
+      );
 
 
-    filtered.sort((a, b) => b.bid - a.bid);
+  if (filtered.length === 0) {
+
+    leaderboard.innerHTML =
+      `<div style="padding:30px;text-align:center;color:#777">
+        No domains found.
+      </div>`;
+
+    return;
+  }
 
 
-    if (filtered.length === 0) {
-
-      leaderboard.innerHTML =
-        `<div style="padding:30px;text-align:center;color:#777">
-          No domains found.
-        </div>`;
-
-      return;
-
-    }
-
-
-    leaderboard.innerHTML = filtered.map((item, index) => {
+  leaderboard.innerHTML =
+    filtered.map((item, index) => {
 
       const rank = index + 1;
 
-      let emoji = rank === 1
-        ? "🥇"
-        : rank === 2
-        ? "🥈"
-        : rank === 3
-        ? "🥉"
-        : rank;
+      const medal =
+        rank === 1
+          ? "🥇"
+          : rank === 2
+          ? "🥈"
+          : rank === 3
+          ? "🥉"
+          : rank;
 
 
       return `
@@ -665,7 +644,7 @@
         <div class="domain-row">
 
           <div class="rank ${rank === 1 ? "first" : ""}">
-            ${emoji}
+            ${medal}
           </div>
 
           <div>
@@ -675,19 +654,22 @@
             </div>
 
             <div class="domain-meta">
-              Submitted by ${escapeHTML(item.owner)}
+              Submitted by ${escapeHTML(item.owner_name)}
             </div>
 
           </div>
 
           <div class="bid">
+
             <small>CURRENT BID</small>
-            $${Number(item.bid).toLocaleString()}
+
+            $${Number(item.current_bid).toLocaleString()}
+
           </div>
 
           <button
             class="bid-button"
-            onclick="openBid('${encodeURIComponent(item.domain)}')"
+            onclick="openBid(${item.id})"
           >
             OUTBID
           </button>
@@ -699,232 +681,275 @@
     }).join("");
 
 
-    updateStats();
+  updateStats();
 
-  }
-
-
-  function updateStats() {
-
-    document.getElementById("domainCount").textContent =
-      domains.length;
+}
 
 
-    const total =
-      domains.reduce(
-        (sum, item) => sum + Number(item.bid),
-        0
-      );
+function updateStats() {
+
+  document.getElementById("domainCount").textContent =
+    domains.length;
 
 
-    const highest =
-      domains.length
-      ? Math.max(...domains.map(item => Number(item.bid)))
+  const total =
+    domains.reduce(
+      (sum, item) =>
+        sum + Number(item.current_bid),
+      0
+    );
+
+
+  const highest =
+    domains.length
+      ? Math.max(
+          ...domains.map(
+            item => Number(item.current_bid)
+          )
+        )
       : 0;
 
 
-    document.getElementById("totalBids").textContent =
-      "$" + total.toLocaleString();
+  document.getElementById("totalBids").textContent =
+    "$" + total.toLocaleString();
 
 
-    document.getElementById("highestBid").textContent =
-      "$" + highest.toLocaleString();
+  document.getElementById("highestBid").textContent =
+    "$" + highest.toLocaleString();
 
-  }
-
-
-  function openSubmit() {
-
-    document.getElementById("submitOverlay").style.display =
-      "flex";
-
-  }
+}
 
 
-  function closeSubmit() {
+function openSubmit() {
 
-    document.getElementById("submitOverlay").style.display =
-      "none";
+  document.getElementById("submitOverlay").style.display =
+    "flex";
 
-  }
-
-
-  function submitDomain() {
-
-    const domain =
-      document.getElementById("newDomain").value.trim();
-
-    const owner =
-      document.getElementById("newOwner").value.trim();
-
-    const bid =
-      Number(document.getElementById("newBid").value);
+}
 
 
-    if (!domain || !owner || !bid || bid < 1) {
+function closeSubmit() {
 
-      alert("Please fill in all fields.");
+  document.getElementById("submitOverlay").style.display =
+    "none";
 
-      return;
-
-    }
-
-
-    const exists =
-      domains.some(
-        item =>
-          item.domain.toLowerCase() === domain.toLowerCase()
-      );
+}
 
 
-    if (exists) {
+async function submitDomain() {
 
-      alert("That domain is already listed.");
+  const domain =
+    document.getElementById("newDomain")
+      .value
+      .trim();
 
-      return;
+  const owner =
+    document.getElementById("newOwner")
+      .value
+      .trim();
 
-    }
-
-
-    domains.push({
-      domain,
-      owner,
-      bid
-    });
-
-
-    save();
-
-    renderLeaderboard();
-
-    closeSubmit();
-
-
-    document.getElementById("newDomain").value = "";
-    document.getElementById("newOwner").value = "";
-    document.getElementById("newBid").value = 5;
-
-
-    alert(
-      "Domain added! Remember: this prototype does not process real payments yet."
+  const bid =
+    Number(
+      document.getElementById("newBid")
+        .value
     );
 
-  }
 
-
-  function openBid(encodedDomain) {
-
-    const domain =
-      decodeURIComponent(encodedDomain);
-
-
-    selectedDomain =
-      domains.find(item => item.domain === domain);
-
-
-    if (!selectedDomain) return;
-
-
-    document.getElementById("bidDescription").textContent =
-      `${selectedDomain.domain} currently has a $${selectedDomain.bid} bid. Your bid must be higher.`;
-
-
-    document.getElementById("bidAmount").value =
-      Number(selectedDomain.bid) + 1;
-
-
-    document.getElementById("bidOverlay").style.display =
-      "flex";
-
-  }
-
-
-  function closeBid() {
-
-    document.getElementById("bidOverlay").style.display =
-      "none";
-
-  }
-
-
-  function placeBid() {
-
-    if (!selectedDomain) return;
-
-
-    const bidder =
-      document.getElementById("bidderName").value.trim();
-
-
-    const amount =
-      Number(document.getElementById("bidAmount").value);
-
-
-    if (!bidder || !amount) {
-
-      alert("Please enter your name and bid.");
-
-      return;
-
-    }
-
-
-    if (amount <= Number(selectedDomain.bid)) {
-
-      alert(
-        `Your bid must be higher than $${selectedDomain.bid}.`
-      );
-
-      return;
-
-    }
-
-
-    selectedDomain.bid = amount;
-
-    selectedDomain.owner = bidder;
-
-
-    save();
-
-    renderLeaderboard();
-
-    closeBid();
-
-
-    document.getElementById("bidderName").value = "";
-
+  if (!domain || !owner || bid < 5) {
 
     alert(
-      `You're now #1 for ${selectedDomain.domain} at $${amount}!`
+      "Please enter a domain, your name, and a bid of at least $5."
     );
+
+    return;
 
   }
 
 
-  function scrollToLeaderboard() {
-
-    document
-      .getElementById("leaderboardSection")
-      .scrollIntoView({
-        behavior: "smooth"
+  const { error } =
+    await supabaseClient
+      .from("domains")
+      .insert({
+        domain: domain,
+        owner_name: owner,
+        current_bid: bid
       });
 
+
+  if (error) {
+
+    alert(
+      "Could not submit domain: " +
+      error.message
+    );
+
+    console.error(error);
+
+    return;
+
   }
 
 
-  function escapeHTML(text) {
+  closeSubmit();
 
-    const div = document.createElement("div");
+  document.getElementById("newDomain").value = "";
+  document.getElementById("newOwner").value = "";
+  document.getElementById("newBid").value = 5;
 
-    div.textContent = text;
 
-    return div.innerHTML;
+  await loadDomains();
+
+
+  alert(
+    "Domain submitted successfully!"
+  );
+
+}
+
+
+function openBid(id) {
+
+  selectedDomain =
+    domains.find(
+      item => Number(item.id) === Number(id)
+    );
+
+
+  if (!selectedDomain) return;
+
+
+  document.getElementById("bidDescription")
+    .textContent =
+      `${selectedDomain.domain} currently has a $${selectedDomain.current_bid} bid. Your bid must be higher.`;
+
+
+  document.getElementById("bidAmount")
+    .value =
+      Number(selectedDomain.current_bid) + 1;
+
+
+  document.getElementById("bidOverlay")
+    .style.display =
+      "flex";
+
+}
+
+
+function closeBid() {
+
+  document.getElementById("bidOverlay")
+    .style.display =
+      "none";
+
+}
+
+
+async function placeBid() {
+
+  if (!selectedDomain) return;
+
+
+  const bidder =
+    document.getElementById("bidderName")
+      .value
+      .trim();
+
+
+  const amount =
+    Number(
+      document.getElementById("bidAmount")
+        .value
+    );
+
+
+  if (!bidder || !amount) {
+
+    alert(
+      "Please enter your name and bid."
+    );
+
+    return;
 
   }
 
 
-  renderLeaderboard();
+  if (
+    amount <=
+    Number(selectedDomain.current_bid)
+  ) {
+
+    alert(
+      `Your bid must be higher than $${selectedDomain.current_bid}.`
+    );
+
+    return;
+
+  }
+
+
+  const { error } =
+    await supabaseClient
+      .from("domains")
+      .update({
+        current_bid: amount,
+        owner_name: bidder
+      })
+      .eq("id", selectedDomain.id);
+
+
+  if (error) {
+
+    alert(
+      "Could not place bid: " +
+      error.message
+    );
+
+    console.error(error);
+
+    return;
+
+  }
+
+
+  closeBid();
+
+  document.getElementById("bidderName").value = "";
+
+
+  await loadDomains();
+
+
+  alert(
+    `Bid updated! ${selectedDomain.domain} is now at $${amount}.`
+  );
+
+}
+
+
+function scrollToLeaderboard() {
+
+  document
+    .getElementById("leaderboardSection")
+    .scrollIntoView({
+      behavior: "smooth"
+    });
+
+}
+
+
+function escapeHTML(text) {
+
+  const div =
+    document.createElement("div");
+
+  div.textContent = text;
+
+  return div.innerHTML;
+
+}
+
+
+loadDomains();
 
 </script>
 
