@@ -672,6 +672,18 @@ function renderLeaderboard() {
    Loading...
 </div>
 </div>
+<button
+   type="button"
+   class="bid-history-button"
+   onclick="showBidHistory(${item.id})"
+>
+   VIEW BID HISTORY
+</button>
+<div
+   id="bid-history-${item.id}"
+   class="bid-history"
+   style="display:none;"
+></div>
           <button
             class="bid-button"
             onclick="openBid(${item.id})"
@@ -685,8 +697,69 @@ function renderLeaderboard() {
       `;
 
     }).join("");
+async function showBidHistory(domainId) {
 
+    const container = document.getElementById(`bid-history-${domainId}`);
 
+    if (!container) return;
+
+    if (container.style.display === "block") {
+
+        container.style.display = "none";
+
+        return;
+
+    }
+
+    container.style.display = "block";
+
+    container.innerHTML = "Loading bid history...";
+
+    try {
+
+        const { data, error } = await supabaseClient
+
+            .from("bids")
+
+            .select("bidder_name, bid_amount, created_at")
+
+            .eq("domain_id", domainId)
+
+            .order("bid_amount", { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+
+            container.innerHTML = "No bids yet.";
+
+            return;
+
+        }
+
+        container.innerHTML = `
+<div class="bid-history-title">Bid History</div>
+
+            ${data.map(bid => `
+<div class="bid-history-row">
+<span>${bid.bidder_name}</span>
+<strong>$${Number(bid.bid_amount).toLocaleString()}</strong>
+</div>
+
+            `).join("")}
+
+        `;
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML = "Could not load bid history.";
+
+    }
+
+}
+ 
   updateStats();
 
 }
