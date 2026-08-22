@@ -664,8 +664,13 @@ function renderLeaderboard() {
             <small>CURRENT BID</small>
 
             $${Number(item.current_bid).toLocaleString()}
-
-          </div>
+            </div>
+          ${item.winner_name ? `
+<div class="winner">
+  <small>WINNER</small>
+  <strong>${item.winner_name}</strong>
+</div>
+` : ""}
           <div class="auction-end">
           <small>AUCTION ENDS</small>
           <div class="auction-countdown" data-end="${item.auction_end}">
