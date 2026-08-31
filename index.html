@@ -12,7 +12,7 @@
   >
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -973,66 +973,138 @@ function closeBid() {
 }
 
 async function placeBid() {
- if (!selectedDomain) return;
- const bidder = document
-   .getElementById("bidderName")
-   .value
-   .trim();
- const amount = Number(
-   document.getElementById("bidAmount").value
- );
- if (!bidder || !amount || amount <= 0) {
-   alert("Please enter your name and a valid bid amount.");
-   return;
- }
- if (amount <= Number(selectedDomain.current_bid)) {
-   alert(
-     "Your bid must be higher than the current bid of $" +
-     Number(selectedDomain.current_bid).toLocaleString()
-   );
-   return;
- }
- try {
-   const response = await fetch(
-     "https://vfkelakubxkcdzunembk.supabase.co/functions/v1/clever-responder",
-     {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json"
-       },
-       body: JSON.stringify({
-         domain_id: Number(selectedDomain.id),
-         bidder_name: bidder,
-         bid_amount: amount
-       })
-     }
-   );
-   const result = await response.json();
-   if (!response.ok) {
-     alert(
-       "Could not place bid: " +
-       (result.error || "Unknown error")
-     );
-     console.error(result);
-     return;
-   }
-   closeBid();
-   document.getElementById("bidderName").value = "";
-   document.getElementById("bidAmount").value = "";
-   await loadDomains();
-   alert(
-     "Bid created successfully!\n\n" +
-     "Your bid of $" +
-     Number(amount).toLocaleString() +
-     " is pending."
-   );
- } catch (error) {
-   console.error(error);
-   alert(
-     "Could not place bid: " +
-     error.message
-   );
- }
+  if (!selectedDomain) return;
+
+  const bidder = document
+    .getElementById("bidderName")
+    .value
+    .trim();
+
+  const amount = Number(
+    document.getElementById("bidAmount").value
+  );
+
+  if (!bidder || !amount || amount <= 0) {
+    alert("Please enter your name and a valid bid amount.");
+    return;
+  }
+
+  if (amount <= Number(selectedDomain.current_bid)) {
+    alert(
+      "Your bid must be higher than the current bid of $" +
+      Number(selectedDomain.current_bid).toLocaleString()
+    );
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      "https://vfkelakubxkcdzunembk.supabase.co/functions/v1/clever-responder",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          domain_id: Number(selectedDomain.id),
+          bidder_name: bidder,
+          bid_amount: amount
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(
+        "Could not create payment: " +
+        (result.error || "Unknown error")
+      );
+      return;
+    }
+
+    if (!result.razorpay_order_id || !result.razorpay_key_id) {
+      alert("Razorpay order was not created correctly.");
+      console.error(result);
+      return;
+    }
+
+    const options = {
+      key: result.razorpay_key_id,
+      amount: Math.round(amount * 100),
+      currency: result.currency || "INR",
+      name: "DomainRank",
+      description: "Bid for " + result.domain,
+      order_id: result.razorpay_order_id,
+
+      handler: async function (paymentResponse) {
+
+        const verifyResponse = await fetch(
+          "https://vfkelakubxkcdzunembk.supabase.co/functions/v1/clever-responder",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              action: "verify_payment",
+              domain_id: Number(selectedDomain.id),
+              bidder_name: bidder,
+              bid_amount: amount,
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_signature: paymentResponse.razorpay_signature
+            })
+          }
+        );
+
+        const verifyResult = await verifyResponse.json();
+
+        if (!verifyResponse.ok || !verifyResult.success) {
+          alert(
+            "Payment was received but verification failed. Please contact support."
+          );
+          console.error(verifyResult);
+          return;
+        }
+
+        closeBid();
+
+        document.getElementById("bidderName").value = "";
+        document.getElementById("bidAmount").value = "";
+
+        await loadDomains();
+
+        alert(
+          "Payment successful!\n\n" +
+          "Your bid of ₹" +
+          amount.toLocaleString() +
+          " has been placed successfully."
+        );
+      },
+
+      modal: {
+        ondismiss: function () {
+          console.log("Razorpay checkout closed.");
+        }
+      },
+
+      theme: {
+        color: "#3399cc"
+      }
+    };
+
+    const razorpay = new Razorpay(options);
+    razorpay.open();
+
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      "Could not place bid: " +
+      error.message
+    );
+  }
 }
 
 function scrollToLeaderboard() {
