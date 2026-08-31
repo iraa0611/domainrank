@@ -1040,16 +1040,46 @@ async function submitDomain() {
 
         // Temporary confirmation
         // We will connect this to secure verification next.
-        const { error } = await supabaseClient
-          .from("domains")
-          .insert({
-            domain: domain,
-            owner_name: owner,
-            current_bid: amount,
-            auction_end: new Date(
-              Date.now() + 24 * 60 * 60 * 1000
-            ).toISOString()
-          });
+        const { data: verifyData, error: verifyError } =
+  await supabaseClient.functions.invoke(
+    "clever-responder",
+    {
+      body: {
+        action: "verify_domain_payment",
+        domain: domain,
+        owner_name: owner,
+        amount: bid,
+        razorpay_order_id: payment.razorpay_order_id,
+        razorpay_payment_id: payment.razorpay_payment_id,
+        razorpay_signature: payment.razorpay_signature
+      }
+    }
+  );
+
+if (verifyError) {
+  console.error("Payment verification error:", verifyError);
+  alert("Payment verification failed: " + verifyError.message);
+  return;
+}
+
+if (!verifyData || !verifyData.success) {
+  console.error("Payment verification failed:", verifyData);
+  alert(
+    "Payment verification failed: " +
+    (verifyData?.error || "Unknown error")
+  );
+  return;
+}
+
+alert("Payment successful! Your domain has been submitted.");
+
+document.getElementById("newDomain").value = "";
+document.getElementById("newOwner").value = "";
+document.getElementById("newBid").value = "";
+
+if (typeof loadDomains === "function") {
+  loadDomains();
+}
 
         if (error) {
           console.error(error);
