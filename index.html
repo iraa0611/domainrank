@@ -896,75 +896,200 @@ async function submitDomain() {
 
   }
 
-  const { error } =
-    await supabaseClient
-      .from("domains")
-      .insert({
+  // Create Razorpay order
+  const orderResponse = await fetch(
+    "https://vfkelakubxkcdzunembk.supabase.co/functions/v1/clever-responder",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "create_domain_order",
         domain: domain,
         owner_name: owner,
-        current_bid: bid,
-        auction_end: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-
-      });
-
-  if (error) {
-
-    alert(
-      "Could not submit domain: " +
-      error.message
-    );
-
-    console.error(error);
-
-    return;
-
-  }
-
-
-  closeSubmit();
-
-  document.getElementById("newDomain").value = "";
-  document.getElementById("newOwner").value = "";
-  document.getElementById("newBid").value = 5;
-
-
-  await loadDomains();
-
-
-  alert(
-    "Domain submitted successfully!"
+        amount: 5,
+      }),
+    }
   );
 
-}
+  const orderResult = await orderResponse.json();
 
+  if (!orderResponse.ok || !orderResult.success) {
+    alert(
+      "Could not create payment: " +
+        (orderResult.error || "Unknown error")
+    );
+    console.error(orderResult);
+    return;
+  }
 
-function openBid(id) {
+  // Open Razorpay checkout
+  const options = {
+    key: orderResult.razorpay_key_id,
+    amount: orderResult.amount,
+    currency: orderResult.currency,
+    name: "DomainRank",
+    description: "Domain Submission Fee",
+    order_id: orderResult.razorpay_order_id,
 
-  selectedDomain =
-    domains.find(
-      item => Number(item.id) === Number(id)
+    handler: async function (paymentResponse) {
+      console.log("Payment successful:", paymentResponse);
+
+      // Payment verification will be handled by Supabase
+      const verifyResponse = await fetch(
+        "https://vfkelakubxkcdzunembk.supabase.co/functions/v1/clever-responder",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "verify_domain_payment",
+            domain: domain,
+            owner_name: owner,
+            amount: 5,
+            razorpay_order_id: paymentResponse.razorpay_order_id,
+            razorpay_payment_id: paymentResponse.razorpay_payment_id,
+            razorpay_signature: paymentResponse.razorpay_signature,
+          }),
+        }
+      );
+
+      const verifyResult = await verifyResponse.json();
+
+      if (!verifyResponse.ok || !verifyResult.success) {
+        alert(
+          "Payment was received but verification failed. Please contact support."
+        );
+        console.error(verifyResult);
+        return;
+      }
+
+      alert("Payment successful! Your domain has been submitted.");
+
+      document.getElementById("newDomain").value = "";
+      document.getElementById("newOwner").value = "";
+      document.getElementById("newBid").value = "";
+
+      await loadDomains();
+    },
+
+    modal: {
+      ondismiss: function () {
+        console.log("Razorpay checkout closed.");
+      },
+    },
+
+    theme: {
+      color: "#000000",
+    },
+  };
+
+  const razorpay = new Razorpay(options);
+  razorpay.open();
+async function submitDomain() {
+  const domain = document.getElementById("newDomain").value.trim();
+  const owner = document.getElementById("newOwner").value.trim();
+  const amount = Number(document.getElementById("newBid").value);
+
+  if (!domain || !owner || !amount || amount <= 0) {
+    alert("Please enter a domain, your name, and an amount.");
+    return;
+  }
+
+  try {
+    // Create Razorpay order
+    const orderResponse = await fetch(
+      "https://vfkelakubxkcdzunembk.supabase.co/functions/v1/clever-responder",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "create_domain_order",
+          domain: domain,
+          owner_name: owner,
+          amount: amount
+        })
+      }
     );
 
+    const orderData = await orderResponse.json();
 
-  if (!selectedDomain) return;
+    if (!orderResponse.ok || !orderData.success) {
+      throw new Error(
+        orderData.error || "Could not create payment order"
+      );
+    }
 
+    // Open Razorpay payment window
+    const options = {
+      key: orderData.razorpay_key_id,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: "DomainRank",
+      description: "Domain Submission",
+      order_id: orderData.razorpay_order_id,
 
-  document.getElementById("bidDescription")
-    .textContent =
-      `${selectedDomain.domain} currently has a $${selectedDomain.current_bid} bid. Your bid must be higher.`;
+      handler: async function (paymentResponse) {
+        alert("Payment successful!");
 
+        console.log("Payment response:", paymentResponse);
 
-  document.getElementById("bidAmount")
-    .value =
-      Number(selectedDomain.current_bid) + 1;
+        // Temporary confirmation
+        // We will connect this to secure verification next.
+        const { error } = await supabaseClient
+          .from("domains")
+          .insert({
+            domain: domain,
+            owner_name: owner,
+            current_bid: amount,
+            auction_end: new Date(
+              Date.now() + 24 * 60 * 60 * 1000
+            ).toISOString()
+          });
 
+        if (error) {
+          console.error(error);
+          alert("Payment succeeded, but domain submission failed: " + error.message);
+          return;
+        }
 
-  document.getElementById("bidOverlay")
-    .style.display =
-      "flex";
+        alert("Domain submitted successfully!");
 
+        document.getElementById("newDomain").value = "";
+        document.getElementById("newOwner").value = "";
+        document.getElementById("newBid").value = "";
+
+        if (typeof loadDomains === "function") {
+          loadDomains();
+        }
+      },
+
+      theme: {
+        color: "#3399cc"
+      }
+    };
+
+    const razorpay = new Razorpay(options);
+
+    razorpay.on("payment.failed", function (response) {
+      console.error("Payment failed:", response.error);
+      alert(
+        "Payment failed: " +
+        (response.error?.description || "Please try again.")
+      );
+    });
+
+    razorpay.open();
+
+  } catch (error) {
+    console.error("Domain submission payment error:", error);
+    alert("Could not start payment: " + error.message);
+  }
 }
-
 
 function closeBid() {
 
